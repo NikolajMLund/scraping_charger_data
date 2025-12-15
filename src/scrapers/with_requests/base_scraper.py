@@ -119,6 +119,8 @@ class base_scraper(ABC):
             try:
                 result=self.query_url(url=url, scraper_tools=scraper_tools, options=options)
                 results[identifier] = result
+                logging.debug(f"scraped {identifier}")
+
             except Timeout:
                 logging.warning(f"Connection timeout - server took too long to respond for {identifier}")
                 ntimeouts += 1
