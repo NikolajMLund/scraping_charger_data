@@ -56,6 +56,7 @@ class base_scraper(ABC):
         sleep_in_seconds = options.pop('sleep_in_seconds', 0.0)
         self._sleep = self.__sleep_func(sleep_in_seconds)
         self.options = options 
+        self.nmaxtimeouts = options.pop('nmaxtimeouts', 10)
 
     @property
     @abstractmethod
@@ -110,6 +111,8 @@ class base_scraper(ABC):
         options = self.options.copy()
         results = {}
         ntimeouts = 0
+        nmaxtimeouts = self.nmaxtimeouts
+        timeoutted_identifiers = []
         for identifier in identifiers:
             self._sleep()
             url = self.identifiers_urls[identifier]
@@ -119,7 +122,8 @@ class base_scraper(ABC):
             except Timeout:
                 logging.warning(f"Connection timeout - server took too long to respond for {identifier}")
                 ntimeouts += 1
-                if ntimeouts > 10: 
+                timeoutted_identifiers.append(identifier)
+                if ntimeouts > self.nmaxtimeouts: 
                     logging.error(f"reached maximum timeouts")
                     logging.error('===== Full Stop  =====')
                     break
@@ -128,7 +132,7 @@ class base_scraper(ABC):
                 # Catch all other requests-related errors
                 logging.warning(f"Request failed: {e} for {identifier}")
                 ntimeouts += 1
-                if ntimeouts > 10: 
+                if ntimeouts >= nmaxtimeouts: 
                     logging.error(f"reached maximum timeouts")
                     logging.error('===== Full Stop  =====')
                     break
